@@ -1,27 +1,23 @@
+from flask import Flask, request, jsonify
 import xml.etree.ElementTree as ET
 import spacy
 
-# Загружаем модель для русского языка
+app = Flask(__name__)
 nlp = spacy.load("ru_core_news_sm")
-
-# Парсим XML
 tree = ET.parse('bim_model.xml')
 root = tree.getroot()
 
-# Функция поиска с NER
 def search_with_ner(query):
     doc = nlp(query)
     floor_num = None
     element_type = None
     
-    # Извлекаем сущности и ключевые слова
     for token in doc:
-        if token.pos_ == "NUM" or token.text.isdigit():  # Число (этаж)
+        if token.pos_ == "NUM" or token.text.isdigit():
             floor_num = token.text
-        elif token.lemma_ in ["перекрытие", "плита", "стена"]:  # Тип элемента
+        elif token.lemma_ in ["перекрытие", "плита", "стена"]:
             element_type = token.lemma_
     
-    # Поиск по дереву
     results = []
     for floor in root.findall(".//floor"):
         if floor_num and floor.get("number") != floor_num:
@@ -34,11 +30,14 @@ def search_with_ner(query):
                     "type": elem.get("type"),
                     "material": elem.get("material")
                 })
-    
     return results
 
-# Тест
-query = "Найди все перекрытия на 3 этаже"
-result = search_with_ner(query)
-print(result)
-# Вывод: [{'id': 'slab_3', 'floor': '3', 'type': 'перекрытие', 'material': 'concrete'}]
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    data = request.get_json()
+    query = data.get('query', '')
+    results = search_with_ner(query)
+    return jsonify({"results": results})
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
