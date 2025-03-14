@@ -1,0 +1,13 @@
+<building>
+    <floor number="1">
+        <slab id="slab_1" type="перекрытие" material="concrete"/>
+        <wall id="wall_1" type="стена" material="brick"/>
+    </floor>
+    <floor number="2">
+        <slab id="slab_2" type="перекрытие" material="wood"/>
+        <slab id="slab_3" type="перекрытие" material="concrete"/>
+    </floor>
+    <floor number="3">
+        <slab id="slab_4" type="перекрытие" material="concrete"/>
+    </floor>
+</building>
