@@ -1,18 +1,9 @@
 import xml.etree.ElementTree as ET
-import spacy
+from sentence_transformers import SentenceTransformer
+import numpy as np
 
-# Загружаем SpaCy для русского языка
-
-nlp = spacy.load("ru_core_news_sm")
-
-# Словарь синонимов
-
-SYNONYMS = {
-    "перекрытия": "перекрытие",
-    "плиты": "перекрытие",
-    "стены": "стена",
-    "окна": "окно"
-}
+# Загружаем модель
+model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
 
 def load_bim_model(file_path):
     tree = ET.parse(file_path)
@@ -29,8 +20,6 @@ def load_bim_model(file_path):
             })
     return bim_dict
 
-# Загружаем модель один раз
-BIM_MODEL = load_bim_model('bim_model_v2.xml')
 
 def search_bim(query):
     doc = nlp(query.lower())
@@ -58,8 +47,26 @@ def search_bim(query):
     
     return results if results else {"error": "Ничего не найдено"}
 
-# Тесты
+# Подготовка данных
+BIM_MODEL = load_bim_model('bim_model_v2.xml')
+element_descriptions = []
+element_metadata = []
+for floor, elements in BIM_MODEL.items():
+    for elem in elements:
+        desc = f"{elem['type']} на этаже {floor}, материал {elem['material']}"
+        element_descriptions.append(desc)
+        element_metadata.append(elem)
 
-print(search_bim("Найди все перекрытия на 3 этаже"))  # Конкретный этаж
-print(search_bim("Найди плиты из бетона на 2 этаже"))  # Синоним + материал
-print(search_bim("Найди окна на 5 этаже"))  # Ненайденный элемент
+# Векторизуем элементы
+element_vectors = model.encode(element_descriptions)
+
+def vector_search(query):
+    query_vector = model.encode([query])[0]
+    similarities = np.dot(element_vectors, query_vector) / (np.linalg.norm(element_vectors, axis=1) * np.linalg.norm(query_vector))
+    top_indices = similarities.argsort()[-3:][::-1]  # Топ-3 результата
+    results = [element_metadata[i] for i in top_indices if similarities[i] > 0.5]  # Порог сходства
+    return results if results else {"error": "Ничего не найдено"}
+
+# Тест
+print(vector_search("Найди перекрытия из бетона на 3 этаже"))
+print(vector_search("Потолки на втором этаже"))
