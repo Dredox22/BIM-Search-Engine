@@ -217,3 +217,38 @@ tags:
 ## Следующий шаг
 
 Подготовить BIM-01: небольшой разрешённый к использованию участок с контрольными отметками. После подтверждения экспорта перейти к проверке LandXML. При старте разработки сверить backlog с реальным кодом репозитория.
+
+## Дополнение: похожие реализации и исследования — 2026-11-03
+
+Проверены публичные страницы и документация. Код не запускался, аудит исходников и лицензий не проводился. Предыдущие устные адреса autodesk-autocad/autodesk/mcp-server, RUB-Informatik/IfcChecker и Text-to-BIM/Text2BIM не использовать как подтверждённые ссылки этого исследования.
+
+| Источник | Что подтверждено описанием | Применение в ADE | Связанные задачи |
+|---|---|---|---|
+| [Autodesk MCP](https://help.autodesk.com/view/ADSKMCP/ENU/) | Официальный локальный AutoCAD and Civil 3D MCP Server в Tech Preview / Public Beta: запросы, анализ, навигация и изменение объектов, проверки по шаблонам, стили Civil | Сначала проверить совместимость с установленными версиями и условия доступа; сравнить со сторонними мостами | BIM-08 |
+| [KevinGriffin-new/civil3d-mcp](https://github.com/KevinGriffin-new/civil3d-mcp) | Python MCP + .NET-плагин внутри Civil через локальный сокет; в README заявлены точки, поверхности и другие операции | Альтернативный кандидат для локального пилота. Перечень функций не означает проверенную надёжность | BIM-02, BIM-08 |
+| [zymorel/autocad-mcp-community](https://github.com/zymorel/autocad-mcp-community) | Заявлена автоматизация AutoCAD, Map 3D и Civil 3D через COM | Сравнить поддержку нужных объектов и версии Windows/CAD | BIM-08 |
+| [IfcOpenShell](https://github.com/IfcOpenShell/IfcOpenShell), [IfcTester](https://docs.ifcopenshell.org/ifctester.html) | Библиотека IFC и проверка информационных требований через IDS | Отдельный адаптер IFC и проверка обязательных свойств. Не заменяет проверки LandXML или расчёт рельефа | BIM-07, BIM-10 |
+| [Text2BIM — исследование](https://arxiv.org/abs/2408.08054), [код авторов](https://github.com/dcy0577/Text2BIM) | Многоагентная генерация моделей через API, с проверкой по правилам; прототип для Vectorworks | Изучить цикл «предложение → исполнение → проверка → обратная связь». Это не готовый коннектор AutoCAD | BIM-10 |
+| [LandXML Surface Tools](https://github.com/txttxtx/landxml_surface_tools), [каталог QGIS](https://plugins.qgis.org/plugins/landxml_surface_tools/) | Описаны DEM → LandXML и QC структуры, единиц, вырожденных треугольников, nodata; сравнение с исходным растром | Близкий аналог части Terrain QA: проверить на эталоне перед собственной реализацией | BIM-03, BIM-04 |
+| [QFAT02 TIN Loader](https://github.com/FGE-2025/QFAT02-TIN-Loader/) | Заявлен импорт LandXML, DXF 3DFACE и 12d в QGIS для просмотра/QA | Кандидат для независимого визуального контроля экспорта | BIM-02, BIM-04 |
+
+### Тематические сообщества и новости
+
+- [Autodesk Platform Services Blog](https://aps.autodesk.com/blog/au-2026-autodesk-building-ai-design-and-make) — публикация 15.09.2026 об агентных интеграциях и Assistant Builder. Разделять анонсируемые возможности и доступные функции.
+- [Autodesk University: Multi-AI-Agent BIM Orchestration](https://www.autodesk.com/autodesk-university/class/Multi-AI-Agent-BIM-Orchestration-Building-Autonomous-Query-Check-Fix-Loops-for-Revit-2026) — описаны сценарии Query / Check / Fix с Revit MCP, Python, LangGraph и YAML-правилами. Материал про Revit, перенос в Civil требует отдельной реализации.
+- [Speckle Blog](https://speckle.systems/blog/), [обновление 31.08.2026](https://speckle.systems/blog/ask-your-model-anything-on-any-project-any-size-anywhere/) — AI по данным моделей, просмотр и интеграции. Кандидат для общего слоя данных/визуализации; различать hosted и open-source возможности.
+- [OSArch Community](https://community.osarch.org/) — сообщество openBIM, IFC и Bonsai; полезно для обсуждений реализации и обмена примерами.
+- [AI_Proektirovanie](https://t.me/AI_Proektirovanie) — оставить как источник экспериментальных демонстраций. Дополнительные Telegram-каналы в этом исследовании не верифицированы.
+
+### Исследовательские действия
+
+- [ ] BIM-08: сравнить официальный MCP и сторонние мосты на одном обезличенном DWG: версии, лицензии, чтение объектов, ошибки, побочные изменения.
+- [ ] BIM-03: проверить LandXML Surface Tools на эталонных корректных и повреждённых файлах; составить матрицу покрытия наших правил.
+- [ ] BIM-07: выбрать небольшой IFC и описать 3–5 информационных требований в IDS для IfcTester.
+- [ ] BIM-10: изучить Text2BIM и материалы AU; заимствовать архитектурный принцип, а не считать исследовательский результат гарантией для наших файлов.
+
+### Предлагаемая архитектура
+
+Отдельные адаптеры DWG/Civil, LandXML и IFC → программные проверки и расчёты → единый отчёт с ID и версиями → агент JARVIS для выбора разрешённых инструментов и объяснений → GitHub/Markdown для задач и решений.
+
+LLM не подменяет геометрический расчёт. Доступ к AutoCAD не означает полноценную поддержку Civil-объектов. Чтение IFC, IDS-проверка и проверка TIN — разные задачи.
